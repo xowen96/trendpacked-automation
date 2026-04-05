@@ -15,24 +15,29 @@ CATEGORIES = [
     {'query': 'lifestyle tips wellness 2025',       'slug': 'lifestyle'},
 ]
 
-# Affiliate links per category (update YOUR_*_AFF_ID with actual IDs)
+# AWIN Publisher ID: 2841288 (account: Amarans)
+_AWIN = "2841288"
+_BOOKING = f"https://www.awin1.com/cread.php?awinmid=13090&awinaffid={_AWIN}&p=https%3A%2F%2Fwww.booking.com"
+_YESSTYLE = f"https://www.awin1.com/cread.php?awinmid=6679&awinaffid={_AWIN}&p=https%3A%2F%2Fwww.yesstyle.com"
+_KLOOK = "https://www.klook.com/en-US/"  # Klook: CJ Affiliate 별도 등록 필요
+
 AFFILIATE = {
     'travel': [
-        ('🏨 Best Hotels on Booking.com', 'https://www.booking.com/'),
-        ('🎟 Tours & Activities on Klook', 'https://www.klook.com/en-US/'),
+        ('🏨 Best Hotels on Booking.com', _BOOKING),
+        ('🎟 Tours & Activities on Klook', _KLOOK),
     ],
     'beauty': [
-        ('🛍 Shop K-Beauty on YesStyle', 'https://www.yesstyle.com/'),
+        ('🛍 Shop K-Beauty on YesStyle', _YESSTYLE),
         ('📦 K-Beauty on Amazon', 'https://www.amazon.com/s?k=k-beauty'),
     ],
     'ai': [
         ('📦 Top AI Gadgets on Amazon', 'https://www.amazon.com/s?k=ai+productivity+tools'),
     ],
     'trending': [
-        ('🏨 Travel Deals on Booking.com', 'https://www.booking.com/'),
+        ('🏨 Travel Deals on Booking.com', _BOOKING),
     ],
     'lifestyle': [
-        ('🎟 Experiences on Klook', 'https://www.klook.com/en-US/'),
+        ('🎟 Experiences on Klook', _KLOOK),
         ('📦 Lifestyle Picks on Amazon', 'https://www.amazon.com/s?k=lifestyle+essentials'),
     ],
 }

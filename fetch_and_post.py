@@ -1,14 +1,12 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 YOUTUBE_API_KEY = os.environ['YOUTUBE_API_KEY']
 WP_URL = "https://tan-gaur-889797.hostingersite.com"
-WP_USERNAME = os.environ['WP_USERNAME']
-WP_PASSWORD = os.environ['WP_PASSWORD']
+WP_API_TOKEN = os.environ['WP_API_TOKEN']
 ADSENSE_CODE = os.environ.get('ADSENSE_CODE', '')
 
-# YouTube 검색어 → WordPress 카테고리 매핑
 CATEGORIES = [
     {'query': 'travel vlog 2025',             'slug': 'travel'},
     {'query': 'k-beauty skincare tutorial',   'slug': 'beauty'},
@@ -16,6 +14,8 @@ CATEGORIES = [
     {'query': 'trending viral 2025',          'slug': 'trending'},
     {'query': 'lifestyle tips wellness 2025', 'slug': 'lifestyle'},
 ]
+
+HEADERS = {'X-TP-Token': WP_API_TOKEN}
 
 
 def fetch_youtube_video(query):
@@ -37,14 +37,13 @@ def fetch_youtube_video(query):
     return items[0] if items else None
 
 
-def get_wp_category_id(slug):
+def get_category_id(slug):
     resp = requests.get(
-        f'{WP_URL}/wp-json/wp/v2/categories',
+        f'{WP_URL}/wp-json/trendpacked/v1/category',
         params={'slug': slug},
         timeout=10,
     )
-    cats = resp.json()
-    return cats[0]['id'] if cats else 1
+    return resp.json().get('id', 1)
 
 
 def build_content(video):
@@ -75,38 +74,33 @@ def build_content(video):
 
 def post_to_wordpress(title, content, category_id):
     resp = requests.post(
-        f'{WP_URL}/wp-json/wp/v2/posts',
-        json={
-            'title': title,
-            'content': content,
-            'status': 'publish',
-            'categories': [category_id],
-        },
-        auth=(WP_USERNAME, WP_PASSWORD),
+        f'{WP_URL}/wp-json/trendpacked/v1/post',
+        json={'title': title, 'content': content, 'category_id': category_id},
+        headers=HEADERS,
         timeout=15,
     )
     return resp.status_code, resp.json()
 
 
 def main():
-    today = datetime.utcnow().strftime('%Y-%m-%d')
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     print(f"[{today}] Starting auto post...")
 
     for cat in CATEGORIES:
         video = fetch_youtube_video(cat['query'])
         if not video:
-            print(f"  {cat['slug']}: no video found, skipping")
+            print(f"  [{cat['slug']}] no video found, skipping")
             continue
 
         title = video['snippet']['title']
         content = build_content(video)
-        cat_id = get_wp_category_id(cat['slug'])
+        cat_id = get_category_id(cat['slug'])
         status, result = post_to_wordpress(title, content, cat_id)
 
-        if status == 201:
-            print(f"  [{cat['slug']}] Posted: {title}")
+        if status == 200:
+            print(f"  [{cat['slug']}] Posted (id={result.get('id')}): {title}")
         else:
-            print(f"  [{cat['slug']}] Failed ({status}): {result.get('message', '')}")
+            print(f"  [{cat['slug']}] Failed ({status}): {result.get('message', result)}")
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ name: Daily Blog Auto Post
 on:
   schedule:
     - cron: '0 1 * * *'   # 매일 오전 10시 KST (UTC 01:00)
-  workflow_dispatch:        # 수동 실행도 가능
+  workflow_dispatch:
 
 jobs:
   post:
@@ -22,6 +22,5 @@ jobs:
         run: python fetch_and_post.py
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          WP_USERNAME:     ${{ secrets.WP_USERNAME }}
-          WP_PASSWORD:     ${{ secrets.WP_PASSWORD }}
+          WP_API_TOKEN:    ${{ secrets.WP_API_TOKEN }}
           ADSENSE_CODE:    ${{ secrets.ADSENSE_CODE }}

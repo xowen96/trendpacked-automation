@@ -22,14 +22,9 @@ def fetch_youtube_video(query):
     resp = requests.get(
         'https://www.googleapis.com/youtube/v3/search',
         params={
-            'part': 'snippet',
-            'q': query,
-            'type': 'video',
-            'order': 'viewCount',
-            'maxResults': 1,
-            'key': YOUTUBE_API_KEY,
-            'relevanceLanguage': 'en',
-            'safeSearch': 'moderate',
+            'part': 'snippet', 'q': query, 'type': 'video',
+            'order': 'viewCount', 'maxResults': 1,
+            'key': YOUTUBE_API_KEY, 'relevanceLanguage': 'en', 'safeSearch': 'moderate',
         },
         timeout=10,
     )
@@ -40,18 +35,15 @@ def fetch_youtube_video(query):
 def get_category_id(slug):
     resp = requests.get(
         f'{WP_URL}/wp-json/trendpacked/v1/category',
-        params={'slug': slug},
-        timeout=10,
+        params={'slug': slug}, timeout=10,
     )
     return resp.json().get('id', 1)
 
 
 def build_content(video):
     vid_id = video['id']['videoId']
-    snippet = video['snippet']
-    desc = snippet.get('description', '')[:400]
-    channel = snippet.get('channelTitle', '')
-
+    desc = video['snippet'].get('description', '')[:400]
+    channel = video['snippet'].get('channelTitle', '')
     ad_block = f'\n<!-- wp:html -->\n{ADSENSE_CODE}\n<!-- /wp:html -->\n' if ADSENSE_CODE else ''
 
     return f"""<!-- wp:paragraph -->
@@ -72,12 +64,16 @@ def build_content(video):
 {ad_block}"""
 
 
-def post_to_wordpress(title, content, category_id):
+def post_to_wordpress(title, content, category_id, thumbnail_url=None):
+    data = {
+        'title': title,
+        'content': content,
+        'category_id': category_id,
+        'thumbnail_url': thumbnail_url,
+    }
     resp = requests.post(
         f'{WP_URL}/wp-json/trendpacked/v1/post',
-        json={'title': title, 'content': content, 'category_id': category_id},
-        headers=HEADERS,
-        timeout=15,
+        json=data, headers=HEADERS, timeout=30,
     )
     return resp.status_code, resp.json()
 
@@ -89,16 +85,18 @@ def main():
     for cat in CATEGORIES:
         video = fetch_youtube_video(cat['query'])
         if not video:
-            print(f"  [{cat['slug']}] no video found, skipping")
+            print(f"  [{cat['slug']}] no video found")
             continue
 
+        vid_id = video['id']['videoId']
         title = video['snippet']['title']
         content = build_content(video)
         cat_id = get_category_id(cat['slug'])
-        status, result = post_to_wordpress(title, content, cat_id)
+        thumb_url = f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg"
+        status, result = post_to_wordpress(title, content, cat_id, thumb_url)
 
         if status == 200:
-            print(f"  [{cat['slug']}] Posted (id={result.get('id')}): {title}")
+            print(f"  [{cat['slug']}] Posted: {title[:60]}")
         else:
             print(f"  [{cat['slug']}] Failed ({status}): {result.get('message', result)}")
 
